@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="robots" content="noindex,nofollow">
+<title>ERP · ARTE PLATAXCO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+</head>
+<body>
+
+<!-- ═════════════ LOGIN ═════════════ -->
+<div class="login" id="loginView">
+  <form class="login-card" id="loginForm" autocomplete="on">
+    <div class="brand-mark">PLATAXCO</div>
+    <div class="brand-sub">Arte · Panel ERP</div>
+    <label class="fld"><span>Correo</span><input type="email" id="lgEmail" autocomplete="username" required></label>
+    <label class="fld"><span>Contraseña</span><input type="password" id="lgPass" autocomplete="current-password" required></label>
+    <button class="btn gold block" type="submit" id="lgBtn"><i class="fa-solid fa-arrow-right-to-bracket"></i> Entrar</button>
+    <button class="link-btn" type="button" id="lgForgot">¿Olvidaste tu contraseña?</button>
+    <p class="login-msg" id="lgMsg"></p>
+  </form>
+</div>
+
+<!-- ═════════════ APP ═════════════ -->
+<div class="app hidden" id="appView">
+  <aside class="side" id="side">
+    <div class="side-brand">
+      <div class="brand-mark sm">PLATAXCO</div>
+      <div class="brand-sub">Arte · ERP</div>
+    </div>
+    <nav class="side-nav" id="sideNav">
+      <button data-view="dashboard" data-role="admin"><i class="fa-solid fa-chart-line"></i>Panel</button>
+      <button data-view="vender"><i class="fa-solid fa-cash-register"></i>Registrar venta</button>
+      <button data-view="ventas"><i class="fa-solid fa-receipt"></i><span data-label-vendor="Mis ventas">Historial de ventas</span></button>
+      <button data-view="productos" data-role="admin"><i class="fa-solid fa-gem"></i>Productos</button>
+      <button data-view="pedidos" data-role="admin"><i class="fa-brands fa-whatsapp"></i>Pedidos web<b class="pill" id="pedBadge"></b></button>
+      <button data-view="vendedores" data-role="admin"><i class="fa-solid fa-user-tie"></i>Vendedores</button>
+      <button data-view="tienda" data-role="admin"><i class="fa-solid fa-store"></i>Tienda en línea</button>
+    </nav>
+    <div class="side-user">
+      <div class="avatar" id="uAvatar">A</div>
+      <div class="u-info"><b id="uName">—</b><small id="uRole">—</small></div>
+      <button class="icon-btn" id="logoutBtn" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+  <div class="side-backdrop" id="sideBackdrop"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn burger" id="burger" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+      <h1 id="viewTitle">Panel</h1>
+      <div class="top-actions">
+        <span class="live"><i></i>En vivo</span>
+        <a class="btn ghost sm hide-xs" href="../tienda/index.html" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver tienda</a>
+      </div>
+    </header>
+
+    <!-- ── DASHBOARD ── -->
+    <section class="view" data-view="dashboard">
+      <div class="toolbar">
+        <div class="seg" id="rangeSeg">
+          <button data-r="7">7 días</button><button data-r="30" class="on">30 días</button><button data-r="90">90 días</button><button data-r="365">12 meses</button><button data-r="0">Todo</button>
+        </div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="charts">
+        <div class="card chart-card wide">
+          <div class="card-hd"><h3>Ingresos y ganancia</h3><small id="chTrendSub"></small></div>
+          <div class="legend" id="lgTrend"></div>
+          <div class="chart-box tall"><canvas id="chTrend" aria-label="Ingresos y ganancia en el tiempo" role="img"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-hd"><h3>Ingresos por categoría</h3></div>
+          <div class="chart-box"><canvas id="chCat" role="img" aria-label="Ingresos por categoría"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-hd"><h3>Inventario: inversión vs. valor de venta</h3></div>
+          <div class="legend" id="lgInv"></div>
+          <div class="chart-box"><canvas id="chInv" role="img" aria-label="Inversión y valor del inventario por categoría"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-hd"><h3>Productos más vendidos</h3><small>piezas</small></div>
+          <div class="chart-box"><canvas id="chTop" role="img" aria-label="Productos más vendidos"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-hd"><h3>Ventas por vendedor</h3></div>
+          <div class="chart-box"><canvas id="chSeller" role="img" aria-label="Ingresos por vendedor"></canvas></div>
+        </div>
+        <div class="card wide">
+          <div class="card-hd"><h3>Stock bajo</h3><small>1 pieza o menos (sin “bajo pedido”)</small></div>
+          <div class="table-wrap"><table class="tbl resp" id="lowStock"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REGISTRAR VENTA ── -->
+    <section class="view" data-view="vender">
+      <div class="sell-grid">
+        <form class="card sell-form" id="saleForm">
+          <div class="card-hd"><h3>Nueva venta</h3></div>
+          <label class="fld"><span>Buscar pieza</span><input type="search" id="sfSearch" placeholder="Nombre, material o categoría" autocomplete="off"></label>
+          <div class="pick-list" id="sfList"></div>
+          <div class="picked" id="sfPicked"><p class="muted">Selecciona una pieza de la lista.</p></div>
+          <div class="row2">
+            <label class="fld"><span>Cantidad</span>
+              <div class="stepper"><button type="button" data-st="-1" aria-label="Menos">−</button><input type="number" id="sfQty" value="1" min="1" inputmode="numeric"><button type="button" data-st="1" aria-label="Más">+</button></div>
+              <small class="hint" id="sfQtyHint"></small>
+            </label>
+            <label class="fld"><span>Precio unitario (MXN)</span><input type="number" id="sfPrice" min="0" step="0.01" inputmode="decimal"></label>
+          </div>
+          <div class="row2">
+            <label class="fld"><span>Método de pago</span>
+              <select id="sfPay"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select>
+            </label>
+            <label class="fld" id="sfSellerWrap"><span>Vendedor</span><select id="sfSeller"></select></label>
+          </div>
+          <label class="fld"><span>Cliente (opcional)</span><input type="text" id="sfClient" autocomplete="off"></label>
+          <label class="fld"><span>Nota (opcional)</span><input type="text" id="sfNote" autocomplete="off"></label>
+          <div class="sale-total"><span>Total</span><b id="sfTotal">$0</b></div>
+          <button class="btn gold block" type="submit" id="sfBtn"><i class="fa-solid fa-check"></i> Registrar venta</button>
+        </form>
+        <div class="card">
+          <div class="card-hd"><h3 id="recentTitle">Ventas de hoy</h3></div>
+          <div class="mini-kpis" id="todayKpis"></div>
+          <div class="feed" id="recentFeed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── HISTORIAL ── -->
+    <section class="view" data-view="ventas">
+      <div class="toolbar wrap">
+        <label class="fld inline"><span>Desde</span><input type="date" id="vfFrom"></label>
+        <label class="fld inline"><span>Hasta</span><input type="date" id="vfTo"></label>
+        <label class="fld inline" id="vfSellerWrap"><span>Vendedor</span><select id="vfSeller"></select></label>
+        <label class="fld inline grow"><span>Buscar</span><input type="search" id="vfSearch" placeholder="Pieza o cliente"></label>
+        <label class="chk"><input type="checkbox" id="vfCancel"> Ver canceladas</label>
+        <button class="btn ghost sm" id="vfCsv"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+      </div>
+      <div class="mini-kpis" id="histKpis"></div>
+      <div class="card flush">
+        <div class="table-wrap"><table class="tbl resp" id="salesTbl"></table></div>
+      </div>
+    </section>
+
+    <!-- ── PRODUCTOS ── -->
+    <section class="view" data-view="productos">
+      <div class="toolbar wrap">
+        <label class="fld inline grow"><span>Buscar</span><input type="search" id="pfSearch" placeholder="Nombre o material"></label>
+        <label class="fld inline"><span>Categoría</span><select id="pfCat"><option value="">Todas</option></select></label>
+        <label class="fld inline"><span>Estado</span>
+          <select id="pfState"><option value="">Todos</option><option value="disp">Disponibles</option><option value="agot">Agotados</option><option value="pp">Bajo pedido</option><option value="oculto">Ocultos</option></select>
+        </label>
+        <button class="btn gold" id="newProd"><i class="fa-solid fa-plus"></i> Nuevo producto</button>
+      </div>
+      <div class="mini-kpis" id="prodKpis"></div>
+      <div class="prod-grid" id="prodGrid"></div>
+    </section>
+
+    <!-- ── PEDIDOS WEB ── -->
+    <section class="view" data-view="pedidos">
+      <div class="toolbar">
+        <div class="seg" id="pedSeg"><button data-e="pendiente" class="on">Pendientes</button><button data-e="confirmado">Confirmados</button><button data-e="cancelado">Cancelados</button></div>
+      </div>
+      <p class="muted small">Cada vez que un cliente finaliza su carrito en la tienda se registra aquí con su folio. Al confirmarlo se descuenta el stock y se crea la venta.</p>
+      <div class="orders" id="ordersList"></div>
+    </section>
+
+    <!-- ── VENDEDORES ── -->
+    <section class="view" data-view="vendedores">
+      <div class="sell-grid">
+        <form class="card" id="vendorForm">
+          <div class="card-hd"><h3>Dar de alta vendedor</h3></div>
+          <label class="fld"><span>Nombre completo</span><input type="text" id="vnName" required autocomplete="off"></label>
+          <label class="fld"><span>Correo (será su usuario)</span><input type="email" id="vnEmail" required autocomplete="off"></label>
+          <label class="fld"><span>Contraseña temporal</span><input type="text" id="vnPass" minlength="6" required autocomplete="new-password"></label>
+          <div class="row2">
+            <label class="fld"><span>Teléfono</span><input type="tel" id="vnPhone" autocomplete="off"></label>
+            <label class="fld"><span>Comisión %</span><input type="number" id="vnCom" min="0" max="100" step="0.5" value="0" inputmode="decimal"></label>
+          </div>
+          <button class="btn gold block" type="submit" id="vnBtn"><i class="fa-solid fa-user-plus"></i> Crear vendedor</button>
+          <p class="muted small">El vendedor entra a este mismo panel con su correo y contraseña. Solo verá “Registrar venta” y su propio historial.</p>
+        </form>
+        <div class="vendors" id="vendorList"></div>
+      </div>
+    </section>
+
+    <!-- ── TIENDA EN LÍNEA ── -->
+    <section class="view" data-view="tienda">
+      <div class="charts">
+        <div class="card">
+          <div class="card-hd"><h3>Temática de temporada</h3></div>
+          <p class="muted small">Cambia colores, barra de anuncios y efectos de la tienda al instante.</p>
+          <label class="fld"><span>Tema activo</span>
+            <select id="themeSel">
+              <option value="">Original (dorado)</option><option value="INVIERNO">Invierno</option><option value="PRIMAVERA">Primavera</option><option value="VERANO">Verano</option>
+              <option value="14_DE_FEBRERO">14 de febrero</option><option value="10_DE_MAYO">10 de mayo</option><option value="15_DE_SEPTIEMBRE">15 de septiembre</option>
+              <option value="BUEN_FIN">Buen Fin</option><option value="BLACK_FRIDAY">Black Friday</option><option value="FIN_DE_AÑO">Fin de año</option><option value="DIA_DE_REYES">Día de Reyes</option>
+            </select>
+          </label>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>Banners del carrusel</h3></div>
+          <form id="bannerForm" class="stack">
+            <label class="fld"><span>Imagen (horizontal, ideal 1600×600)</span><input type="file" id="bnFile" accept="image/*" required></label>
+            <label class="fld"><span>Título (opcional)</span><input type="text" id="bnTitle" autocomplete="off"></label>
+            <button class="btn gold" type="submit" id="bnBtn"><i class="fa-solid fa-upload"></i> Subir banner</button>
+          </form>
+          <div class="banners" id="bannerList"></div>
+        </div>
+        <div class="card wide">
+          <div class="card-hd"><h3>Reseñas de clientes</h3><small>Solo reseñas reales; la sección se oculta si no hay ninguna</small></div>
+          <form id="reviewForm" class="review-form">
+            <label class="fld"><span>Nombre del cliente</span><input type="text" id="rvName" required autocomplete="off"></label>
+            <label class="fld"><span>Estrellas</span><select id="rvStars"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+            <label class="fld"><span>Fecha</span><input type="date" id="rvDate"></label>
+            <label class="fld full"><span>Comentario</span><textarea id="rvText" rows="2" required></textarea></label>
+            <label class="chk"><input type="checkbox" id="rvVer"> Compra verificada (está en tu historial de ventas)</label>
+            <button class="btn gold" type="submit"><i class="fa-solid fa-plus"></i> Agregar reseña</button>
+          </form>
+          <div class="reviews" id="reviewList"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ═════════════ MODAL PRODUCTO ═════════════ -->
+<div class="modal" id="prodModal">
+  <form class="modal-box lg" id="prodForm">
+    <div class="modal-hd"><h3 id="pmTitle">Nuevo producto</h3><button type="button" class="icon-btn" data-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-bd">
+      <div class="pm-grid">
+        <div class="pm-imgs">
+          <div class="img-slots" id="pmImgs"></div>
+          <label class="btn ghost block file-btn"><i class="fa-solid fa-camera"></i> Agregar fotos (máx. 4)<input type="file" id="pmFile" accept="image/*" multiple hidden></label>
+          <div class="url-row"><input type="url" id="pmUrl" placeholder="…o pega la URL de una imagen"><button type="button" class="btn ghost sm" id="pmUrlAdd">Añadir</button></div>
+          <p class="muted small">La primera foto es la portada. Toca una foto para hacerla portada.</p>
+        </div>
+        <div class="pm-fields">
+          <label class="fld"><span>Nombre *</span><input type="text" id="pmName" required autocomplete="off"></label>
+          <div class="row2">
+            <label class="fld"><span>Categoría</span><select id="pmCat"></select></label>
+            <label class="fld"><span>Material</span><input type="text" id="pmMat" list="matList" placeholder="Plata .925" autocomplete="off"><datalist id="matList"><option>Plata .925</option><option>Plata .950</option><option>Oro 10k</option><option>Oro 14k</option><option>Oro laminado</option><option>Acero inoxidable</option></datalist></label>
+          </div>
+          <div class="row3">
+            <label class="fld"><span>Precio venta *</span><input type="number" id="pmPrice" min="0" step="0.01" required inputmode="decimal"></label>
+            <label class="fld"><span>Precio anterior</span><input type="number" id="pmOld" min="0" step="0.01" inputmode="decimal" placeholder="tachado"></label>
+            <label class="fld"><span>Costo por pieza</span><input type="number" id="pmCost" min="0" step="0.01" inputmode="decimal" placeholder="inversión"></label>
+          </div>
+          <div class="row3">
+            <label class="fld"><span>Peso (gramos)</span><input type="number" id="pmWeight" min="0" step="0.01" inputmode="decimal"></label>
+            <label class="fld"><span>Stock (piezas)</span><input type="number" id="pmStock" min="0" step="1" value="1" inputmode="numeric"></label>
+            <div class="fld"><span>Margen</span><div class="calc" id="pmMargin">—</div></div>
+          </div>
+          <label class="fld"><span>Descripción</span><textarea id="pmDesc" rows="3"></textarea></label>
+          <div class="fld"><span>Etiquetas en la tienda</span>
+            <div class="tags">
+              <label class="tag"><input type="checkbox" id="tgPromo"><i></i>Promoción</label>
+              <label class="tag"><input type="checkbox" id="tgNuevo"><i></i>Nuevo</label>
+              <label class="tag"><input type="checkbox" id="tgUnica"><i></i>Pieza única</label>
+              <label class="tag"><input type="checkbox" id="tgLim"><i></i>Edición limitada</label>
+              <label class="tag"><input type="checkbox" id="tgTop"><i></i>Más vendido</label>
+            </div>
+          </div>
+          <div class="row2">
+            <label class="chk"><input type="checkbox" id="pmPP"> Se vende bajo pedido (aunque no haya stock)</label>
+            <label class="chk"><input type="checkbox" id="pmVis" checked> Visible en la tienda</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button type="button" class="btn danger ghost" id="pmDelete"><i class="fa-solid fa-trash"></i> Eliminar</button>
+      <span class="grow"></span>
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn gold" id="pmSave"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+    </div>
+  </form>
+</div>
+
+<!-- ═════════════ MODAL GENÉRICO ═════════════ -->
+<div class="modal" id="dlg">
+  <div class="modal-box sm">
+    <div class="modal-hd"><h3 id="dlgTitle"></h3><button type="button" class="icon-btn" data-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-bd" id="dlgBody"></div>
+    <div class="modal-ft"><span class="grow"></span><button class="btn ghost" data-close id="dlgCancel">Cancelar</button><button class="btn gold" id="dlgOk">Aceptar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div class="spinner"></div></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
