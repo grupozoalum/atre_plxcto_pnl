@@ -728,7 +728,7 @@ $("#pmFile").addEventListener("change", async e => {
   if (!files.length) { toast("Máximo 4 fotos por producto", true); return; }
   PM.uploading += files.length; renderPmImgs();
   await Promise.all(files.map(async f => {
-    try { const url = await uploadImage(f, `ap_productos/${PM.id}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, 1400, 640); PM.imgs.push(url); PM.newUploads.push(url); }
+    try { const url = await uploadImage(f, `arte_plataxco/productos/${PM.id}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, 1400, 640); PM.imgs.push(url); PM.newUploads.push(url); }
     catch (err) { toast("No se pudo procesar una imagen", true); console.error(err); }
     PM.uploading--; renderPmImgs();
   }));
@@ -993,7 +993,7 @@ $("#bannerForm").addEventListener("submit", async e => {
   const f = $("#bnFile").files[0]; if (!f) return;
   const btn = $("#bnBtn"); btn.disabled = true; loading(true);
   try {
-    const url = await uploadImage(f, `ap_banners/${Date.now()}`, 1800, 1100);
+    const url = await uploadImage(f, `arte_plataxco/banners/${Date.now()}`, 1800, 1100);
     await addDoc(collection(db, COL.banners), { url, titulo: $("#bnTitle").value.trim(), activo: true, creadoEn: serverTimestamp() });
     $("#bannerForm").reset(); toast("Banner publicado");
   } catch (err) { toast(fbErr(err), true); }
