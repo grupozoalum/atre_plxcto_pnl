@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js" defer></script>
 </head>
 <body>
 
@@ -39,13 +40,18 @@
       <div class="brand-sub">Arte · ERP</div>
     </div>
     <nav class="side-nav" id="sideNav">
+      <small class="nav-group">Vender</small>
       <button data-view="dashboard" data-role="admin"><i class="fa-solid fa-chart-line"></i>Panel</button>
-      <button data-view="vender"><i class="fa-solid fa-cash-register"></i>Registrar venta</button>
+      <button data-view="vender"><i class="fa-solid fa-cash-register"></i>Punto de venta</button>
+      <button data-view="apartados"><i class="fa-solid fa-hand-holding-dollar"></i>Apartados<b class="pill amber" id="apBadge"></b></button>
       <button data-view="ventas"><i class="fa-solid fa-receipt"></i><span data-label-vendor="Mis ventas">Historial de ventas</span></button>
-      <button data-view="productos" data-role="admin"><i class="fa-solid fa-gem"></i>Productos</button>
       <button data-view="pedidos" data-role="admin"><i class="fa-brands fa-whatsapp"></i>Pedidos web<b class="pill" id="pedBadge"></b></button>
+      <small class="nav-group" data-role="admin">Negocio</small>
+      <button data-view="productos" data-role="admin"><i class="fa-solid fa-gem"></i>Inventario</button>
+      <button data-view="clientes" data-role="admin"><i class="fa-solid fa-users"></i>Clientes</button>
       <button data-view="vendedores" data-role="admin"><i class="fa-solid fa-user-tie"></i>Vendedores</button>
       <button data-view="tienda" data-role="admin"><i class="fa-solid fa-store"></i>Tienda en línea</button>
+      <button data-view="ajustes" data-role="admin"><i class="fa-solid fa-sliders"></i>Ajustes</button>
     </nav>
     <div class="side-user">
       <div class="avatar" id="uAvatar">A</div>
@@ -61,6 +67,7 @@
       <h1 id="viewTitle">Panel</h1>
       <div class="top-actions">
         <span class="live"><i></i>En vivo</span>
+        <button class="btn gold sm" id="quickSale"><i class="fa-solid fa-plus"></i><span class="hide-xs"> Venta</span></button>
         <a class="btn ghost sm hide-xs" href="../tienda/index.html" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver tienda</a>
       </div>
     </header>
@@ -69,9 +76,11 @@
     <section class="view" data-view="dashboard">
       <div class="toolbar">
         <div class="seg" id="rangeSeg">
-          <button data-r="7">7 días</button><button data-r="30" class="on">30 días</button><button data-r="90">90 días</button><button data-r="365">12 meses</button><button data-r="0">Todo</button>
+          <button data-r="1">Hoy</button><button data-r="7">7 días</button><button data-r="30" class="on">30 días</button><button data-r="90">90 días</button><button data-r="365">12 meses</button><button data-r="0">Todo</button>
         </div>
       </div>
+      <div class="alerts" id="alerts"></div>
+      <div class="goal card" id="goalCard"></div>
       <div class="kpis" id="kpis"></div>
       <div class="charts">
         <div class="card chart-card wide">
@@ -84,57 +93,91 @@
           <div class="chart-box"><canvas id="chCat" role="img" aria-label="Ingresos por categoría"></canvas></div>
         </div>
         <div class="card chart-card">
+          <div class="card-hd"><h3>Productos más vendidos</h3><small>piezas</small></div>
+          <div class="chart-box"><canvas id="chTop" role="img" aria-label="Productos más vendidos"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-hd"><h3>Métodos de pago</h3></div>
+          <div class="chart-box"><canvas id="chPay" role="img" aria-label="Ingresos por método de pago"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-hd"><h3>Mejores días de la semana</h3></div>
+          <div class="chart-box"><canvas id="chDow" role="img" aria-label="Ingresos por día de la semana"></canvas></div>
+        </div>
+        <div class="card chart-card">
           <div class="card-hd"><h3>Inventario: inversión vs. valor de venta</h3></div>
           <div class="legend" id="lgInv"></div>
           <div class="chart-box"><canvas id="chInv" role="img" aria-label="Inversión y valor del inventario por categoría"></canvas></div>
-        </div>
-        <div class="card chart-card">
-          <div class="card-hd"><h3>Productos más vendidos</h3><small>piezas</small></div>
-          <div class="chart-box"><canvas id="chTop" role="img" aria-label="Productos más vendidos"></canvas></div>
         </div>
         <div class="card chart-card">
           <div class="card-hd"><h3>Ventas por vendedor</h3></div>
           <div class="chart-box"><canvas id="chSeller" role="img" aria-label="Ingresos por vendedor"></canvas></div>
         </div>
         <div class="card wide">
-          <div class="card-hd"><h3>Stock bajo</h3><small>1 pieza o menos (sin “bajo pedido”)</small></div>
+          <div class="card-hd"><h3>Stock bajo</h3><small id="lowSub">según el stock mínimo de cada pieza</small></div>
           <div class="table-wrap"><table class="tbl resp" id="lowStock"></table></div>
+        </div>
+        <div class="card wide">
+          <div class="card-hd"><h3>Piezas sin movimiento</h3><small id="idleSub"></small></div>
+          <div class="table-wrap"><table class="tbl resp" id="idleTbl"></table></div>
         </div>
       </div>
     </section>
 
     <!-- ── REGISTRAR VENTA ── -->
     <section class="view" data-view="vender">
-      <div class="sell-grid">
-        <form class="card sell-form" id="saleForm">
-          <div class="card-hd"><h3>Nueva venta</h3></div>
-          <label class="fld"><span>Buscar pieza</span><input type="search" id="sfSearch" placeholder="Nombre, material o categoría" autocomplete="off"></label>
-          <div class="pick-list" id="sfList"></div>
-          <div class="picked" id="sfPicked"><p class="muted">Selecciona una pieza de la lista.</p></div>
+      <div class="pos">
+        <div class="card pos-left">
+          <div class="pos-search">
+            <i class="fa-solid fa-barcode"></i>
+            <input type="search" id="sfSearch" placeholder="Escanea el código o busca nombre, SKU, material…" autocomplete="off" enterkeyhint="search">
+            <kbd class="hide-xs">/</kbd>
+          </div>
+          <div class="cat-chips" id="sfCats"></div>
+          <div class="pick-grid" id="sfList"></div>
+        </div>
+        <form class="card pos-ticket" id="saleForm">
+          <div class="card-hd"><h3>Ticket <span class="tk-count" id="tkCount"></span></h3><button type="button" class="btn sm ghost" id="sfClear"><i class="fa-solid fa-eraser"></i> Vaciar</button></div>
+          <div class="tk-lines" id="tkLines"></div>
           <div class="row2">
-            <label class="fld"><span>Cantidad</span>
-              <div class="stepper"><button type="button" data-st="-1" aria-label="Menos">−</button><input type="number" id="sfQty" value="1" min="1" inputmode="numeric"><button type="button" data-st="1" aria-label="Más">+</button></div>
-              <small class="hint" id="sfQtyHint"></small>
+            <label class="fld"><span>Cliente</span><input type="text" id="sfClient" list="clientList" autocomplete="off" placeholder="Nombre"></label>
+            <label class="fld"><span>WhatsApp</span><input type="tel" id="sfTel" autocomplete="off" inputmode="tel" placeholder="10 dígitos"></label>
+          </div>
+          <datalist id="clientList"></datalist>
+          <div class="row2">
+            <label class="fld"><span>Descuento</span><div class="disc"><input type="number" id="sfDisc" min="0" step="0.01" value="0" inputmode="decimal"><select id="sfDiscType" aria-label="Tipo de descuento"><option value="pct">%</option><option value="mxn">$</option></select></div></label>
+            <label class="fld"><span>Método de pago</span>
+              <select id="sfPay"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Mercado Pago</option><option>Otro</option></select>
             </label>
-            <label class="fld"><span>Precio unitario (MXN)</span><input type="number" id="sfPrice" min="0" step="0.01" inputmode="decimal"></label>
           </div>
           <div class="row2">
-            <label class="fld"><span>Método de pago</span>
-              <select id="sfPay"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select>
-            </label>
+            <label class="fld" id="sfCashWrap"><span>Recibido en efectivo</span><input type="number" id="sfCash" min="0" step="0.01" inputmode="decimal" placeholder="para calcular cambio"></label>
             <label class="fld" id="sfSellerWrap"><span>Vendedor</span><select id="sfSeller"></select></label>
           </div>
-          <label class="fld"><span>Cliente (opcional)</span><input type="text" id="sfClient" autocomplete="off"></label>
-          <label class="fld"><span>Nota (opcional)</span><input type="text" id="sfNote" autocomplete="off"></label>
-          <div class="sale-total"><span>Total</span><b id="sfTotal">$0</b></div>
-          <button class="btn gold block" type="submit" id="sfBtn"><i class="fa-solid fa-check"></i> Registrar venta</button>
+          <label class="fld"><span>Nota (opcional)</span><input type="text" id="sfNote" autocomplete="off" placeholder="Grabado, talla, regalo…"></label>
+          <div class="tk-sum" id="tkSum"></div>
+          <div class="pos-btns">
+            <button type="button" class="btn ghost" id="sfLayaway"><i class="fa-solid fa-hand-holding-dollar"></i> Apartar</button>
+            <button type="submit" class="btn gold" id="sfBtn"><i class="fa-solid fa-check"></i> Cobrar</button>
+          </div>
         </form>
-        <div class="card">
-          <div class="card-hd"><h3 id="recentTitle">Ventas de hoy</h3></div>
-          <div class="mini-kpis" id="todayKpis"></div>
-          <div class="feed" id="recentFeed"></div>
-        </div>
       </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-hd"><h3 id="recentTitle">Ventas de hoy</h3><button class="btn sm ghost" id="sfCut"><i class="fa-solid fa-cash-register"></i> Corte del día</button></div>
+        <div class="mini-kpis" id="todayKpis"></div>
+        <div class="feed" id="recentFeed"></div>
+      </div>
+    </section>
+
+    <!-- ── APARTADOS ── -->
+    <section class="view" data-view="apartados">
+      <div class="toolbar wrap">
+        <div class="seg" id="apSeg"><button data-e="activo" class="on">Activos</button><button data-e="vencido">Vencidos</button><button data-e="liquidado">Liquidados</button><button data-e="cancelado">Cancelados</button></div>
+        <label class="fld inline grow"><span>Buscar</span><input type="search" id="apSearch" placeholder="Folio, cliente o pieza"></label>
+      </div>
+      <div class="mini-kpis" id="apKpis"></div>
+      <p class="muted small">Un apartado reserva las piezas (se descuentan del stock y desaparecen de la tienda) hasta que el cliente liquida. Al liquidar se crean las ventas.</p>
+      <div class="orders" id="apList"></div>
     </section>
 
     <!-- ── HISTORIAL ── -->
@@ -143,8 +186,9 @@
         <label class="fld inline"><span>Desde</span><input type="date" id="vfFrom"></label>
         <label class="fld inline"><span>Hasta</span><input type="date" id="vfTo"></label>
         <label class="fld inline" id="vfSellerWrap"><span>Vendedor</span><select id="vfSeller"></select></label>
-        <label class="fld inline grow"><span>Buscar</span><input type="search" id="vfSearch" placeholder="Pieza o cliente"></label>
+        <label class="fld inline grow"><span>Buscar</span><input type="search" id="vfSearch" placeholder="Pieza, cliente, folio o SKU"></label>
         <label class="chk"><input type="checkbox" id="vfCancel"> Ver canceladas</label>
+        <button class="btn ghost sm" id="vfCut2"><i class="fa-solid fa-cash-register"></i> Corte de caja</button>
         <button class="btn ghost sm" id="vfCsv"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
       </div>
       <div class="mini-kpis" id="histKpis"></div>
@@ -156,15 +200,40 @@
     <!-- ── PRODUCTOS ── -->
     <section class="view" data-view="productos">
       <div class="toolbar wrap">
-        <label class="fld inline grow"><span>Buscar</span><input type="search" id="pfSearch" placeholder="Nombre o material"></label>
+        <label class="fld inline grow"><span>Buscar</span><input type="search" id="pfSearch" placeholder="Nombre, SKU, material o proveedor"></label>
         <label class="fld inline"><span>Categoría</span><select id="pfCat"><option value="">Todas</option></select></label>
         <label class="fld inline"><span>Estado</span>
-          <select id="pfState"><option value="">Todos</option><option value="disp">Disponibles</option><option value="agot">Agotados</option><option value="pp">Bajo pedido</option><option value="oculto">Ocultos</option></select>
+          <select id="pfState"><option value="">Todos</option><option value="disp">Disponibles</option><option value="bajo">Stock bajo</option><option value="agot">Agotados</option><option value="pp">Bajo pedido</option><option value="oculto">Ocultos</option><option value="idle">Sin movimiento</option><option value="sincosto">Sin costo</option><option value="sinfoto">Sin foto</option></select>
         </label>
+        <label class="fld inline"><span>Ordenar</span>
+          <select id="pfSort"><option value="new">Más recientes</option><option value="name">Nombre</option><option value="priceD">Precio mayor</option><option value="priceA">Precio menor</option><option value="stock">Menos stock</option><option value="margin">Mayor margen</option><option value="top">Más vendidos (90 d)</option></select>
+        </label>
+      </div>
+      <div class="toolbar wrap sub">
         <button class="btn gold" id="newProd"><i class="fa-solid fa-plus"></i> Nuevo producto</button>
+        <button class="btn ghost sm" id="pfLabels"><i class="fa-solid fa-tags"></i> Etiquetas <b id="pfSelCount"></b></button>
+        <button class="btn ghost sm" id="pfSelAll"><i class="fa-regular fa-square-check"></i> Seleccionar visibles</button>
+        <button class="btn ghost sm" id="pfCsv"><i class="fa-solid fa-file-csv"></i> Exportar inventario</button>
+        <button class="btn ghost sm" id="pfMovs"><i class="fa-solid fa-clock-rotate-left"></i> Movimientos</button>
       </div>
       <div class="mini-kpis" id="prodKpis"></div>
       <div class="prod-grid" id="prodGrid"></div>
+    </section>
+
+    <!-- ── CLIENTES ── -->
+    <section class="view" data-view="clientes">
+      <div class="toolbar wrap">
+        <label class="fld inline grow"><span>Buscar</span><input type="search" id="clSearch" placeholder="Nombre, teléfono o correo"></label>
+        <label class="fld inline"><span>Segmento</span>
+          <select id="clSeg"><option value="">Todos</option><option value="vip">VIP</option><option value="frec">Frecuentes</option><option value="nuevo">Nuevos (30 d)</option><option value="inact">Inactivos (+120 d)</option><option value="apart">Con apartado</option><option value="web">Cuenta en tienda</option></select>
+        </label>
+        <label class="fld inline"><span>Ordenar</span>
+          <select id="clSort"><option value="total">Mayor compra</option><option value="last">Compra más reciente</option><option value="count">Más compras</option><option value="name">Nombre</option></select>
+        </label>
+        <button class="btn ghost sm" id="clCsv"><i class="fa-solid fa-file-csv"></i> Exportar</button>
+      </div>
+      <div class="mini-kpis" id="clKpis"></div>
+      <div class="card flush"><div class="table-wrap"><table class="tbl resp" id="clTbl"></table></div></div>
     </section>
 
     <!-- ── PEDIDOS WEB ── -->
@@ -232,6 +301,45 @@
         </div>
       </div>
     </section>
+    <!-- ── AJUSTES ── -->
+    <section class="view" data-view="ajustes">
+      <div class="charts">
+        <form class="card" id="metalForm">
+          <div class="card-hd"><h3>Precio del metal</h3><small>por gramo, MXN</small></div>
+          <p class="muted small">Se usa para calcular el valor del metal en tu inventario y sugerir precios por peso.</p>
+          <div class="metal-grid" id="metalGrid"></div>
+          <div class="row2">
+            <label class="fld"><span>Factor de venta</span><input type="number" id="ajFactor" min="1" step="0.1" inputmode="decimal" placeholder="2.5"><small class="hint">Precio sugerido = gramos × precio/g × factor</small></label>
+            <label class="fld"><span>Mano de obra fija</span><input type="number" id="ajLabor" min="0" step="1" inputmode="decimal" placeholder="0"><small class="hint">Se suma por pieza</small></label>
+          </div>
+          <button class="btn gold" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar precios</button>
+        </form>
+        <form class="card" id="goalForm">
+          <div class="card-hd"><h3>Metas y reglas</h3></div>
+          <label class="fld"><span>Meta de ventas del mes</span><input type="number" id="ajGoal" min="0" step="100" inputmode="decimal" placeholder="50000"></label>
+          <div class="row2">
+            <label class="fld"><span>Stock mínimo por defecto</span><input type="number" id="ajMin" min="0" step="1" inputmode="numeric" placeholder="1"></label>
+            <label class="fld"><span>Días sin venta = “sin movimiento”</span><input type="number" id="ajIdle" min="15" step="1" inputmode="numeric" placeholder="90"></label>
+          </div>
+          <div class="row2">
+            <label class="fld"><span>Plazo de apartado (días)</span><input type="number" id="ajTerm" min="1" step="1" inputmode="numeric" placeholder="30"></label>
+            <label class="fld"><span>Anticipo mínimo %</span><input type="number" id="ajDown" min="0" max="100" step="1" inputmode="numeric" placeholder="20"></label>
+          </div>
+          <button class="btn gold" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+        </form>
+        <form class="card wide" id="bizForm">
+          <div class="card-hd"><h3>Datos del negocio para tickets</h3><small>Aparecen en recibos, apartados y mensajes de WhatsApp</small></div>
+          <div class="review-form">
+            <label class="fld"><span>Nombre</span><input type="text" id="bzName" placeholder="ARTE PLATAXCO" autocomplete="off"></label>
+            <label class="fld"><span>WhatsApp / teléfono</span><input type="tel" id="bzTel" autocomplete="off"></label>
+            <label class="fld"><span>Instagram</span><input type="text" id="bzIg" placeholder="@arteplataxco" autocomplete="off"></label>
+            <label class="fld full"><span>Dirección</span><input type="text" id="bzAddr" autocomplete="off"></label>
+            <label class="fld full"><span>Mensaje al pie del ticket</span><textarea id="bzFoot" rows="2" placeholder="Garantía de 30 días en plata .925. Cambios dentro de 7 días con este ticket."></textarea></label>
+            <button class="btn gold" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar datos</button>
+          </div>
+        </form>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -248,10 +356,13 @@
           <p class="muted small">La primera foto es la portada. Toca una foto para hacerla portada.</p>
         </div>
         <div class="pm-fields">
-          <label class="fld"><span>Nombre *</span><input type="text" id="pmName" required autocomplete="off"></label>
+          <div class="row-name">
+            <label class="fld"><span>Nombre *</span><input type="text" id="pmName" required autocomplete="off"></label>
+            <label class="fld"><span>SKU / código</span><div class="url-row"><input type="text" id="pmSku" autocomplete="off" placeholder="AN-0001"><button type="button" class="btn ghost sm" id="pmSkuGen" title="Generar">Auto</button></div></label>
+          </div>
           <div class="row2">
             <label class="fld"><span>Categoría</span><select id="pmCat"></select></label>
-            <label class="fld"><span>Material</span><input type="text" id="pmMat" list="matList" placeholder="Plata .925" autocomplete="off"><datalist id="matList"><option>Plata .925</option><option>Plata .950</option><option>Oro 10k</option><option>Oro 14k</option><option>Oro laminado</option><option>Acero inoxidable</option></datalist></label>
+            <label class="fld"><span>Material</span><input type="text" id="pmMat" list="matList" placeholder="Plata .925" autocomplete="off"><datalist id="matList"><option>Plata .925</option><option>Plata .950</option><option>Oro 10k</option><option>Oro 14k</option><option>Oro 18k</option><option>Oro laminado</option><option>Chapa de oro</option><option>Acero inoxidable</option></datalist></label>
           </div>
           <div class="row3">
             <label class="fld"><span>Precio venta *</span><input type="number" id="pmPrice" min="0" step="0.01" required inputmode="decimal"></label>
@@ -261,8 +372,15 @@
           <div class="row3">
             <label class="fld"><span>Peso (gramos)</span><input type="number" id="pmWeight" min="0" step="0.01" inputmode="decimal"></label>
             <label class="fld"><span>Stock (piezas)</span><input type="number" id="pmStock" min="0" step="1" value="1" inputmode="numeric"></label>
-            <div class="fld"><span>Margen</span><div class="calc" id="pmMargin">—</div></div>
+            <label class="fld"><span>Stock mínimo</span><input type="number" id="pmMin" min="0" step="1" inputmode="numeric" placeholder="por defecto"></label>
           </div>
+          <div class="suggest" id="pmSuggest"></div>
+          <div class="row3">
+            <label class="fld"><span>Talla / medida</span><input type="text" id="pmTalla" autocomplete="off" placeholder="7 · 45 cm"></label>
+            <label class="fld"><span>Piedra / acabado</span><input type="text" id="pmPiedra" autocomplete="off" placeholder="Zirconia, rodinado"></label>
+            <label class="fld"><span>Proveedor</span><input type="text" id="pmProv" list="provList" autocomplete="off"><datalist id="provList"></datalist></label>
+          </div>
+          <div class="fld"><span>Margen</span><div class="calc" id="pmMargin">—</div></div>
           <label class="fld"><span>Descripción</span><textarea id="pmDesc" rows="3"></textarea></label>
           <div class="fld"><span>Etiquetas en la tienda</span>
             <div class="tags">
@@ -277,11 +395,13 @@
             <label class="chk"><input type="checkbox" id="pmPP"> Se vende bajo pedido (aunque no haya stock)</label>
             <label class="chk"><input type="checkbox" id="pmVis" checked> Visible en la tienda</label>
           </div>
+          <div class="pm-hist" id="pmHist"></div>
         </div>
       </div>
     </div>
     <div class="modal-ft">
       <button type="button" class="btn danger ghost" id="pmDelete"><i class="fa-solid fa-trash"></i> Eliminar</button>
+      <button type="button" class="btn ghost" id="pmDup"><i class="fa-regular fa-copy"></i> Duplicar</button>
       <span class="grow"></span>
       <button type="button" class="btn ghost" data-close>Cancelar</button>
       <button type="submit" class="btn gold" id="pmSave"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
